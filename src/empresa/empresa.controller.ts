@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
 import { EmpresaService } from './empresa.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
@@ -8,8 +8,8 @@ export class EmpresaController {
   constructor(private readonly empresaService: EmpresaService) {}
 
   @Post()
-  create(@Body() createEmpresaDto: CreateEmpresaDto) {
-    return this.empresaService.create(createEmpresaDto);
+  create(@Body() Body) {
+    return (Body);
   }
 
   @Get()
@@ -22,10 +22,20 @@ export class EmpresaController {
     return this.empresaService.findOne(+id);
   }
 
+  @Put(':id')
+  async update(@Body() body, @Param() params){
+    return {
+      method: 'put',
+      body,
+      params
+    }
+  }
+
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEmpresaDto: UpdateEmpresaDto) {
+  updateSelection(@Param('id') id: string, @Body() updateEmpresaDto: UpdateEmpresaDto) {
     return this.empresaService.update(+id, updateEmpresaDto);
   }
+
 
   @Delete(':id')
   remove(@Param('id') id: string) {
