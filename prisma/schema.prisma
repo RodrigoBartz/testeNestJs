@@ -1,0 +1,296 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model arquivo {
+  arquivo_id         String               @id @db.VarChar(255)
+  usuario_id         BigInt
+  arquivo_descricao  String?              @db.VarChar(45)
+  arquivo_data       DateTime?            @db.DateTime(0)
+  arquivo_versao     Decimal?             @db.Decimal(2, 2)
+  arquivo_link       String?              @db.VarChar(300)
+  local_id           BigInt?
+  projeto_id         BigInt
+  etapa_id           BigInt?
+  arquivo_id_pai     String?              @db.VarChar(255)
+  arquivo            arquivo?             @relation("arquivoToarquivo", fields: [arquivo_id_pai], references: [arquivo_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_arquivo1")
+  other_arquivo      arquivo[]            @relation("arquivoToarquivo")
+  etapa              etapa?               @relation(fields: [etapa_id], references: [etapa_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_etapa1")
+  local              local?               @relation(fields: [local_id], references: [local_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_local1")
+  projeto            projeto              @relation(fields: [projeto_id], references: [projeto_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_projeto1")
+  usuarios           usuarios             @relation(fields: [usuario_id], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_usuario1")
+  arquivo_comentario arquivo_comentario[]
+  arquivo_tag        arquivo_tag[]
+  permissionamento   permissionamento[]
+
+  @@index([arquivo_id_pai], map: "fk_arquivo_arquivo1_idx")
+  @@index([etapa_id], map: "fk_arquivo_etapa1_idx")
+  @@index([local_id], map: "fk_arquivo_local1_idx")
+  @@index([projeto_id], map: "fk_arquivo_projeto1_idx")
+  @@index([usuario_id], map: "fk_arquivo_usuario1_idx")
+}
+
+model arquivo_comentario {
+  arquivo_comentario_id        BigInt                       @id @default(autoincrement())
+  arquivo_comentario_descricao String?                      @db.Text
+  arquivo_comentario_markup    Int?
+  arquivo_id                   String                       @db.VarChar(255)
+  arquivo_comentario_id_pai    BigInt?
+  arquivo_comentario_nivel     Int?
+  arquivo                      arquivo                      @relation(fields: [arquivo_id], references: [arquivo_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_comentario_arquivo1")
+  arquivo_comentario           arquivo_comentario?          @relation("arquivo_comentarioToarquivo_comentario", fields: [arquivo_comentario_id_pai], references: [arquivo_comentario_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_comentario_arquivo_id_pai")
+  other_arquivo_comentario     arquivo_comentario[]         @relation("arquivo_comentarioToarquivo_comentario")
+  arquivo_comentario_markup    arquivo_comentario_markup[]
+  arquivo_comentario_tag       arquivo_comentario_tag[]
+  arquivo_comentario_usuario   arquivo_comentario_usuario[]
+
+  @@index([arquivo_id], map: "fk_arquivo_comentario_arquivo1_idx")
+  @@index([arquivo_comentario_id_pai], map: "fk_arquivo_comentario_arquivo_id_pai")
+}
+
+model arquivo_comentario_markup {
+  arquivo_comentario_markup_id        BigInt             @id @default(autoincrement())
+  arquivo_comentario_markup_link_s3   String?            @db.VarChar(300)
+  arquivo_comentario_markup_descricao String?            @db.LongText
+  arquivo_comentario_id               BigInt
+  arquivo_comentario                  arquivo_comentario @relation(fields: [arquivo_comentario_id], references: [arquivo_comentario_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_comentario_markup_arquivo_comentario1")
+
+  @@index([arquivo_comentario_id], map: "fk_arquivo_comentario_markup_arquivo_comentario1_idx")
+}
+
+model arquivo_comentario_tag {
+  arquivo_comentario_tag_id BigInt             @id @default(autoincrement())
+  arquivo_comentario_id     BigInt
+  tag_id                    BigInt
+  arquivo_comentario        arquivo_comentario @relation(fields: [arquivo_comentario_id], references: [arquivo_comentario_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_comentario_tag_arquivo_comentario1")
+  tag                       tag                @relation(fields: [tag_id], references: [tag_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_comentario_tag_tag1")
+
+  @@index([arquivo_comentario_id], map: "fk_comentario_tag_arquivo_comentario1_idx")
+  @@index([tag_id], map: "fk_comentario_tag_tag1_idx")
+}
+
+model arquivo_comentario_usuario {
+  arquivo_comentario_usuario_id BigInt             @id @default(autoincrement())
+  usuario_id                    BigInt
+  arquivo_comentario_id         BigInt
+  arquivo_comentario            arquivo_comentario @relation(fields: [arquivo_comentario_id], references: [arquivo_comentario_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_comentario_usuario_arquivo_comentario1")
+  usuarios                      usuarios           @relation(fields: [usuario_id], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_comentario_usuario_usuario1")
+
+  @@index([arquivo_comentario_id], map: "fk_arquivo_comentario_usuario_arquivo_comentario1_idx")
+  @@index([usuario_id], map: "fk_arquivo_comentario_usuario_usuario1_idx")
+}
+
+model arquivo_tag {
+  arquivo_tag_id BigInt  @id @default(autoincrement())
+  arquivo_id     String  @db.VarChar(255)
+  tag_id         BigInt
+  arquivo        arquivo @relation(fields: [arquivo_id], references: [arquivo_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_tag_arquivo1")
+  tag            tag     @relation(fields: [tag_id], references: [tag_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_arquivo_tag_tag1")
+
+  @@index([arquivo_id], map: "fk_arquivo_tag_arquivo1_idx")
+  @@index([tag_id], map: "fk_arquivo_tag_tag1_idx")
+}
+
+model disciplina {
+  disciplina_id        BigInt             @id @default(autoincrement())
+  disciplina_descricao String?            @db.VarChar(300)
+  projeto_id           BigInt
+  projeto              projeto            @relation(fields: [projeto_id], references: [projeto_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_disciplina_projeto1")
+  etapa                etapa[]
+  permissionamento     permissionamento[]
+
+  @@index([projeto_id], map: "fk_disciplina_projeto1_idx")
+}
+
+model empresa {
+  empresa_id   BigInt     @id @default(autoincrement())
+  empresa_nome String?    @db.VarChar(300)
+  empresa_cnpj String?    @db.VarChar(14)
+  projeto      projeto[]
+  usuarios     usuarios[]
+}
+
+model etapa {
+  etapa_id         BigInt             @id @default(autoincrement())
+  etapa_descricao  String?            @db.VarChar(300)
+  disciplina_id    BigInt
+  etapa_id_pai     BigInt?
+  arquivo          arquivo[]
+  etapa            etapa?             @relation("etapaToetapa", fields: [etapa_id_pai], references: [etapa_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_etapa_etapa1")
+  other_etapa      etapa[]            @relation("etapaToetapa")
+  disciplina       disciplina         @relation(fields: [disciplina_id], references: [disciplina_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_fase_disciplina1")
+  permissionamento permissionamento[]
+
+  @@index([etapa_id_pai], map: "fk_etapa_etapa1_idx")
+  @@index([disciplina_id], map: "fk_fase_disciplina1_idx")
+}
+
+model grupo {
+  grupo_id         BigInt             @id @default(autoincrement())
+  grupo_nome       String?            @db.VarChar(45)
+  grupo_descricao  String?            @db.VarChar(300)
+  permissionamento permissionamento[]
+  usuario_grupo    usuario_grupo[]
+}
+
+model lista_compartilhada {
+  lista_compartilhada_id        BigInt                        @id @default(autoincrement())
+  lista_compartilhada_descricao String?                       @db.VarChar(300)
+  lista_compartilhada_data      DateTime?                     @db.DateTime(0)
+  lista_compartilhada_arquivo   lista_compartilhada_arquivo[]
+}
+
+model lista_compartilhada_arquivo {
+  lista_compartilhada_arquivo_id BigInt              @id @default(autoincrement())
+  permissionamento_id            String              @db.VarChar(255)
+  lista_compartilhada_id         BigInt
+  permissionamento               permissionamento    @relation(fields: [permissionamento_id], references: [permissionamento_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_lista_arquivos_arquivo_permissionamento1")
+  lista_compartilhada            lista_compartilhada @relation(fields: [lista_compartilhada_id], references: [lista_compartilhada_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_lista_compartilhada_arquivo_lista_compartilhada1")
+
+  @@index([permissionamento_id], map: "fk_lista_arquivos_arquivo_permissionamento1_idx")
+  @@index([lista_compartilhada_id], map: "fk_lista_compartilhada_arquivo_lista_compartilhada1_idx")
+}
+
+model local {
+  local_id        BigInt    @id @default(autoincrement())
+  local_descricao String?   @db.VarChar(300)
+  projeto_id      BigInt
+  arquivo         arquivo[]
+  projeto         projeto   @relation(fields: [projeto_id], references: [projeto_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_projeto_local_projeto1")
+
+  @@index([projeto_id], map: "fk_projeto_local_projeto1_idx")
+}
+
+model notificacao {
+  notificacao_id     BigInt    @id @default(autoincrement())
+  notificacao_data   DateTime? @db.DateTime(0)
+  notificacao_status Int?
+  usuario_id         BigInt
+  usuarios           usuarios  @relation(fields: [usuario_id], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notificacao_usuario1")
+
+  @@index([usuario_id], map: "fk_notificacao_usuario1_idx")
+}
+
+model permissionamento {
+  permissionamento_id         String                        @id @db.VarChar(255)
+  projeto_id                  BigInt
+  disciplina_id               BigInt?
+  grupo_id                    BigInt?
+  permissionamento_tipo       String?                       @db.VarChar(4)
+  arquivo_id                  String                        @db.VarChar(255)
+  etapa_id                    BigInt?
+  usuario_id                  BigInt?
+  lista_compartilhada_arquivo lista_compartilhada_arquivo[]
+  arquivo                     arquivo                       @relation(fields: [arquivo_id], references: [arquivo_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_permissionamento_arquivo1")
+  disciplina                  disciplina?                   @relation(fields: [disciplina_id], references: [disciplina_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_permissionamento_disciplina1")
+  etapa                       etapa?                        @relation(fields: [etapa_id], references: [etapa_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_permissionamento_etapa1")
+  grupo                       grupo?                        @relation(fields: [grupo_id], references: [grupo_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_permissionamento_grupo1")
+  projeto                     projeto                       @relation(fields: [projeto_id], references: [projeto_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_permissionamento_projeto1")
+  usuarios                    usuarios?                     @relation(fields: [usuario_id], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_permissionamento_usuario1")
+
+  @@index([arquivo_id], map: "fk_permissionamento_arquivo1_idx")
+  @@index([disciplina_id], map: "fk_permissionamento_disciplina1_idx")
+  @@index([etapa_id], map: "fk_permissionamento_etapa1_idx")
+  @@index([grupo_id], map: "fk_permissionamento_grupo1_idx")
+  @@index([projeto_id], map: "fk_permissionamento_projeto1_idx")
+  @@index([usuario_id], map: "fk_permissionamento_usuario1_idx")
+}
+
+model projeto {
+  projeto_id        BigInt             @id @default(autoincrement())
+  empresa_id        BigInt
+  projeto_descricao String?            @db.VarChar(300)
+  projeto_status    Int?
+  arquivo           arquivo[]
+  disciplina        disciplina[]
+  local             local[]
+  permissionamento  permissionamento[]
+  empresa           empresa            @relation(fields: [empresa_id], references: [empresa_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_projeto_empresa1")
+  projeto_usuario   projeto_usuario[]
+  relatorio         relatorio[]
+  tag               tag[]
+
+  @@index([empresa_id], map: "fk_projeto_empresa1_idx")
+}
+
+model projeto_usuario {
+  projeto_usuario_id     BigInt   @id @default(autoincrement())
+  projeto_usuario_status Int?
+  usuario_id             BigInt
+  projeto_id             BigInt
+  projeto                projeto  @relation(fields: [projeto_id], references: [projeto_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_projeto_usuario_projeto1")
+  usuarios               usuarios @relation(fields: [usuario_id], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_projeto_usuario_usuario1")
+
+  @@index([projeto_id], map: "fk_projeto_usuario_projeto1_idx")
+  @@index([usuario_id], map: "fk_projeto_usuario_usuario1_idx")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model relatorio {
+  relatorio_id        Int     @id @default(autoincrement())
+  relatorio_descricao String? @db.VarChar(300)
+  relatorio_tipo      String? @db.VarChar(45)
+  projeto_id          BigInt
+  relatorio_json      String? @db.LongText
+  projeto             projeto @relation(fields: [projeto_id], references: [projeto_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_relatorio_projeto1")
+
+  @@index([projeto_id], map: "fk_relatorio_projeto1_idx")
+}
+
+model tag {
+  tag_id                 BigInt                   @id @default(autoincrement())
+  tag_nome               String?                  @db.VarChar(45)
+  projeto_id             BigInt
+  arquivo_comentario_tag arquivo_comentario_tag[]
+  arquivo_tag            arquivo_tag[]
+  projeto                projeto                  @relation(fields: [projeto_id], references: [projeto_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tag_projeto1")
+
+  @@index([projeto_id], map: "fk_tag_projeto1_idx")
+}
+
+model usuario_grupo {
+  usuario_grupo_id BigInt   @id @default(autoincrement())
+  usuario_id       BigInt
+  grupo_id         BigInt
+  grupo            grupo    @relation(fields: [grupo_id], references: [grupo_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_grupo_grupo1")
+  usuarios         usuarios @relation(fields: [usuario_id], references: [usuario_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_grupo_usuario1")
+
+  @@index([grupo_id], map: "fk_usuario_grupo_grupo1_idx")
+  @@index([usuario_id], map: "fk_usuario_grupo_usuario1_idx")
+}
+
+model usuario_tipo {
+  usuario_tipo_id        Int        @id @default(autoincrement())
+  usuario_tipo_descricao String?    @db.VarChar(50)
+  usuarios               usuarios[]
+}
+
+model usuarios {
+  usuario_id                 BigInt                       @id @default(autoincrement())
+  usuario_nome               String?                      @db.VarChar(300)
+  usuario_email              String?                      @db.VarChar(100)
+  usuario_cpf                String?                      @db.VarChar(11)
+  usuario_cnpj               String                       @db.VarChar(14)
+  usuario_endereco           String?                      @db.VarChar(100)
+  usuario_status             Int?
+  usuario_cargo              String?                      @db.VarChar(45)
+  usuario_tipo_id            Int
+  empresa_id                 BigInt
+  usuario_password           String                       @db.VarChar(50)
+  arquivo                    arquivo[]
+  arquivo_comentario_usuario arquivo_comentario_usuario[]
+  notificacao                notificacao[]
+  permissionamento           permissionamento[]
+  projeto_usuario            projeto_usuario[]
+  usuario_grupo              usuario_grupo[]
+  empresa                    empresa                      @relation(fields: [empresa_id], references: [empresa_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_empresa1")
+  usuario_tipo               usuario_tipo                 @relation(fields: [usuario_tipo_id], references: [usuario_tipo_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_usuario_tipo1")
+
+  @@index([empresa_id], map: "fk_usuario_empresa1_idx")
+  @@index([usuario_tipo_id], map: "fk_usuario_usuario_tipo1_idx")
+}
